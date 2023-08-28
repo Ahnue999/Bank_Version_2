@@ -10,7 +10,16 @@ void Functions();
 
 const string FileName = "Client.txt";
 
-enum Func { Show = 1, Add, Delete, Update, Find, Exit};
+namespace MainFunc {
+    enum Func
+    {
+        Show = 1, Add, Delete, Update, Find, Transactions, Exit };
+}
+namespace TransFunc {
+enum Func
+{
+    Deposit = 1, Withdraw, Total_Balances, Main_Menu };
+}
 
 struct stData {
     string AccountNumber;
@@ -20,6 +29,8 @@ struct stData {
     double AccountBalance;
     bool ToDelete = false;
 };
+
+void PrintTransactionsMenu();
 
 vector<string> Split(string TheString, string Delim = " ")
 {
@@ -83,7 +94,8 @@ void PrintMainMenu() {
     cout << "\t [3] Delete Client.\n";
     cout << "\t [4] Update Client.\n";
     cout << "\t [5] Find Client.\n";
-    cout << "\t [6] Exit.\n";
+    cout << "\t [6] Transactions.\n";
+    cout << "\t [7] Exit.\n";
     cout << "========================================================================\n";
     cout << "Choose what do you want to do? [1 to 6] ?\n";
     Functions();
@@ -94,7 +106,7 @@ void PrintClients(vector<stData> Data) {
     cout << "                          Client list (" << Data.size() << ") Client(s): " << endl;
     cout << "_______________________________________________________________________________________________________\n";
     cout << "| " << setw(20) << left << "Account Number" << "| " << setw(12) << "Pin Code" << "| " << setw(34) << "Client Name" << "| " << setw(18) << "Phone Number" << "| " << setw(12) << "Balance";
-    cout << "\n<tab>_______________________________________________________________________________________________________\n";
+    cout << "\n_______________________________________________________________________________________________________\n";
 
     for (stData &Record : Data) {
         cout <<  "| " << setw(20) << Record.AccountNumber <<  "| " << setw(12) << Record.PINCode << "| " << setw(34) << Record.Name << "| " << setw(18) << Record.Phone << "| " << setw(12) << Record.AccountBalance << endl;
@@ -289,6 +301,12 @@ void PressToContinue() {
             PrintMainMenu();
 }
 
+void TransPressToContinue() {
+            cout << "\nPress Enter To Continue...\n";
+            system("pause>0");
+            PrintTransactionsMenu();
+}
+
 void FindClient(vector<stData> Clients) {
     string ID;
     cout << "Enter the ID you want to find? \n";
@@ -302,42 +320,171 @@ void FindClient(vector<stData> Clients) {
     }
 }
 
+double WithdrawFromClient(double Amount) {
+    double Depo;
+    cout << "How much do you want to deposit ? \n";
+    cin >> Depo;
+    Amount -= Depo;
+    return Amount;
+}
+double DepositToClient(double Amount) {
+    double Depo;
+    cout << "How much do you want to deposit ? \n";
+    cin >> Depo;
+    Amount += Depo;
+    return Amount;
+}
+void Deposit(vector<stData> Clients) {
+    stData Client;
+    string ID;
+    char Answer;
+    cout << "Enter the Account ID you want to Deposit into\n";
+    cin >> ID;
+    if (SearchClient(ID, Clients, Client)) {
+        PrintRecord(Client);
+
+        cout << "Are you sure you want to deposit to this account? \n";
+        cin >> Answer;
+        
+        if (toupper(Answer) == 'Y') {
+            for (stData &C : Clients)
+            {
+                if (C.AccountNumber == ID)
+                {
+                    C.AccountBalance = DepositToClient(C.AccountBalance);
+                    break;
+                }
+            }
+            LoadVectorToFile(FileName, Clients);
+
+            cout << "Deposit Success\n";
+            Clients = LoadFileToVector(FileName);
+        }
+    }
+}
+
+void Withdraw(vector<stData> Clients) {
+    stData Client;
+    string ID;
+    char Answer;
+    cout << "Enter the Account ID you want to Withdraw from\n";
+    cin >> ID;
+    if (SearchClient(ID, Clients, Client)) {
+        PrintRecord(Client);
+
+        cout << "Are you sure you want to withdraw from this account? \n";
+        cin >> Answer;
+        
+        if (toupper(Answer) == 'Y') {
+            for (stData &C : Clients)
+            {
+                if (C.AccountNumber == ID)
+                {
+                    C.AccountBalance = WithdrawFromClient(C.AccountBalance);
+                    break;
+                }
+            }
+            LoadVectorToFile(FileName, Clients);
+
+            cout << "Withdraw Success\n";
+            Clients = LoadFileToVector(FileName);
+        }
+    }
+}
+
+void PrintTotalBalances(vector<stData> Data) {
+    system ("cls");
+    cout << "                          Client list (" << Data.size() << ") Client(s): " << endl;
+    cout << "_______________________________________________________________________________________________________\n";
+    cout << "| " << setw(20) << left << "Account Number" << "| " << setw(34) << "Client Name" << "| " << setw(12) << "Balance";
+    cout << "\n_______________________________________________________________________________________________________\n";
+
+    for (stData &Record : Data) {
+        cout <<  "| " << setw(20) << Record.AccountNumber << "| " << setw(34) << Record.Name << "| " << setw(12) << Record.AccountBalance << endl;
+    }
+}
+
+void TransactionFunctions() {
+    vector<stData> Data;
+    int ans;
+    cin >> ans;
+    vector<stData> Clients = LoadFileToVector(FileName);
+
+    switch (ans) {
+        case TransFunc::Deposit: {
+            Deposit(Clients);
+            TransPressToContinue();
+            break;
+        }
+        case TransFunc::Withdraw: {
+            Withdraw(Clients);
+            TransPressToContinue();
+            break;
+        }
+        case TransFunc::Total_Balances: {
+            PrintTotalBalances(LoadFileToVector(FileName));
+            TransPressToContinue();
+            break;
+        }
+        case TransFunc::Main_Menu: {
+            PrintMainMenu();
+            break;
+        }
+    }
+}
+void PrintTransactionsMenu() {
+    system ("cls");
+    cout << "========================================================================\n";
+    cout << "\t\t\t   Transactions Screen \n";
+    cout << "========================================================================\n";
+    cout << "\t [1] Deposit.\n";
+    cout << "\t [2] Withdraw.\n";
+    cout << "\t [3] Total Balances.\n";
+    cout << "\t [4] Main Menu.\n";
+    cout << "========================================================================\n";
+    cout << "Choose what do you want to do? [1 to 4] ?\n";
+    TransactionFunctions();
+}
+
 void Functions() {
     int Ans;
     cin >> Ans;
     vector<stData> Clients = LoadFileToVector(FileName);
     
     switch(Ans) {
-        case Show: {
+        case MainFunc::Show: {
             PrintClients(LoadFileToVector(FileName));
             PressToContinue();
             break;
         }
-        case Add: {
+        case MainFunc::Add: {
             system("cls");
             AddClients(Clients);
             PressToContinue();
             break;
         }
-        case Delete: {
+        case MainFunc::Delete: {
             system("cls");
             DeleteClientByID(Clients);
             PressToContinue();
             break;
         }
-        case Update: {
+        case MainFunc::Update: {
             system("cls");
             UpdateClientByID(Clients);
             PressToContinue();
             break;
         }
-        case Find: {
+        case MainFunc::Find: {
             system("cls");
             FindClient(Clients);
             PressToContinue();
             break;
         }
-        case Exit: {
+        case MainFunc::Transactions: {
+            PrintTransactionsMenu();
+        }
+        case MainFunc::Exit: {
             system("cls");
             cout << "\n HAVE A NICE DAY~! \n";
             cout << "\n\n Exitting ... \n\n";
